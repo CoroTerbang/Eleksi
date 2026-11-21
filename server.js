@@ -221,6 +221,13 @@ app.post('/vote/cast', (req, res) => {
 });
 app.get('/vote/cancel', (req, res) => { delete req.session.voterId; res.redirect('/vote'); });
 
+app.post('/vote/unlock', (req, res) => {
+  const password = String(req.body.password || '');
+  const admins = db.db.prepare('SELECT password_hash FROM admins').all();
+  const ok = admins.some(a => bcrypt.compareSync(password, a.password_hash));
+  res.json({ ok });
+});
+
 app.use((err, req, res, next) => {
   console.error(err);
   if (req.path.startsWith('/admin')) {
