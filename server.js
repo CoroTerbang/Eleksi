@@ -120,6 +120,41 @@ app.post('/admin/candidates/:id/delete', requireAdmin, (req, res) => {
   res.redirect('/admin');
 });
 
+// ---------- Admin: DPT & kode ----------
+app.post('/admin/voters', requireAdmin, (req, res) => {
+  try {
+    const { name, nis } = req.body;
+    if (!name || !String(name).trim() || !nis || !String(nis).trim()) throw new Error('Nama dan NIS wajib diisi.');
+    if (!db.addVoter(String(name).trim(), String(nis).trim())) throw new Error('NIS sudah terdaftar.');
+    setFlash(req, 'ok', 'Pemilih ditambahkan.');
+  } catch (e) { setFlash(req, 'err', e.message); }
+  res.redirect('/admin');
+});
+app.post('/admin/voters/bulk', requireAdmin, (req, res) => {
+  try {
+    const r = db.addVotersBulk(req.body.bulk);
+    setFlash(req, 'ok', `Ditambahkan ${r.added} pemilih, dilewati ${r.skipped}.`);
+  } catch (e) { setFlash(req, 'err', e.message); }
+  res.redirect('/admin');
+});
+app.post('/admin/voters/:id/delete', requireAdmin, (req, res) => {
+  try {
+    db.deleteVoter(Number(req.params.id));
+    setFlash(req, 'ok', 'Pemilih dihapus.');
+  } catch (e) { setFlash(req, 'err', e.message); }
+  res.redirect('/admin');
+});
+app.post('/admin/codes/generate', requireAdmin, (req, res) => {
+  try {
+    const n = db.generateCodes();
+    setFlash(req, 'ok', `Generate kode untuk ${n} pemilih.`);
+  } catch (e) { setFlash(req, 'err', e.message); }
+  res.redirect('/admin');
+});
+app.get('/admin/codes/print', requireAdmin, (req, res) => {
+  res.render('admin/codes-print', { title: 'Cetak Kode', voters: db.voters() });
+});
+
 app.use((err, req, res, next) => {
   console.error(err);
   if (req.path.startsWith('/admin')) {

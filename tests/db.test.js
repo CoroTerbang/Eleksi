@@ -27,3 +27,17 @@ test('castVote menolak calon tidak valid tanpa kehilangan hak', () => {
   assert.throws(() => db.castVote(voter.id, 9999), /Calon/);
   assert.equal(db.voter(voter.id).has_voted, 0);
 });
+
+test('addVotersBulk parses comma and semicolon, skips invalid lines', () => {
+  const r = db.addVotersBulk('111, Siti\n222; Andi\n333\n444, ');
+  assert.deepEqual(r, { added: 2, skipped: 2 });
+  assert.equal(db.voterByNis('111').name, 'Siti');
+});
+
+test('generateCodes assigns unique six digit codes', () => {
+  const n = db.generateCodes();
+  assert.ok(n >= 1);
+  const codes = db.voters().map(v => v.code);
+  assert.ok(codes.every(c => /^\d{6}$/.test(c)));
+  assert.equal(new Set(codes).size, codes.length);
+});
