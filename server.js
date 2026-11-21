@@ -183,6 +183,44 @@ app.post('/admin/reset', requireAdmin, (req, res) => {
   res.redirect('/admin');
 });
 
+// ---------- Panel pemilih ----------
+app.get('/vote', (req, res) => {
+  res.render('vote/login', { title: 'Panel Pemilih', error: null, info: null });
+});
+app.post('/vote/verify', (req, res) => {
+  const code = String(req.body.code || '').trim();
+  const voter = db.voterByCode(code);
+  if (!db.isOpen()) return res.render('vote/login', { title: 'Panel Pemilih', error: 'Pemungutan suara sedang ditutup.', info: null });
+  if (!voter) return res.render('vote/login', { title: 'Panel Pemilih', error: `Kode "${code}" tidak valid.`, info: null });
+  if (voter.has_voted) return res.render('vote/login', { title: 'Panel Pemilih', error: `${voter.name} sudah menggunakan hak pilih.`, info: null });
+  req.session.voterId = voter.id;
+  res.redirect('/vote/ballot');
+});
+app.get('/vote/ballot', (req, res) => {
+  if (!db.isOpen()) { delete req.session.voterId; return res.render('vote/closed', { title: 'Pemungutan Ditutup' }); }
+  if (!req.session.voterId) return res.redirect('/vote');
+  const voter = db.voter(req.session.voterId);
+  if (!voter || voter.has_voted) { delete req.session.voterId; return res.redirect('/vote'); }
+  res.render('vote/ballot', { title: 'Pilih Calon', candidates: db.candidates(), voter, quota: db.quota(), kioskEnabled: db.getSetting('kiosk_enabled'), error: null });
+});
+app.post('/vote/cast', (req, res) => {
+  if (!req.session.voterId) return res.redirect('/vote');
+  const voter = db.voter(req.session.voterId);
+  if (!voter || voter.has_voted) { delete req.session.voterId; return res.redirect('/vote'); }
+  const raw = req.body.candidateId;
+  const ids = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+  let chosen = [];
+  try {
+    db.castVote(req.session.voterId, ids);
+    chosen = ids.map(id => db.candidate(Number(id))).name);
+  } catch (e) {
+    return res.render('vote/ballot', { title: 'Pilih Calon', candidates: db.candidates(), voter, quota: db.quota(), kioskEnabled: db.getSetting('kiosk_enabled'), error: e.message });
+  }
+  delete req.session.voterId;
+  res.render('vote/success', { title: 'Terima Kasih', voter, chosen });
+});
+app.get('/vote/cancel', (req, res) => { delete req.session.voterId; res.redirect('/vote'); });
+
 app.use((err, req, res, next) => {
   console.error(err);
   if (req.path.startsWith('/admin')) {

@@ -1,0 +1,12 @@
+<%- include('../partials/header', { title, admin: false }) %>
+<section class="card card-narrow vote-success">
+  <div class="success-mark" aria-hidden="true">✓</div>
+  <h1>Terima Kasih</h1>
+  <p class="muted"><%= voter.name %> telah menggunakan hak pilih.</p>
+  <% if (chosen && chosen.length) { %>
+    <p>Pilihan: <strong><%= chosen.join(', ') %></strong></p>
+  <% } %>
+  <p class="muted">Silakan keluar dari bilik suara.</p>
+  <a href="/vote" class="btn btn-primary">Pemilih Berikutnya</a>
+</section>
+<%- include('../partials/footer') %>
