@@ -1,0 +1,18 @@
+<%- include('../partials/header', { title, admin: false }) %>
+<section class="card card-narrow">
+  <h1>Masuk Admin</h1>
+  <p class="muted">Gunakan akun panitia.</p>
+  <% if (error) { %><div class="alert alert-error" role="alert"><%= error %></div><% } %>
+  <form method="post" action="/admin/login" class="form-stack">
+    <label>
+      <span>Username</span>
+      <input type="text" name="username" autocomplete="username" required autofocus>
+    </label>
+    <label>
+      <span>Password</span>
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit" class="btn btn-primary">Masuk</button>
+  </form>
+</section>
+<%- include('../partials/footer') %>
