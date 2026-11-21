@@ -86,6 +86,40 @@ app.get('/admin', requireAdmin, (req, res) => {
   });
 });
 
+// ---------- Admin: calon ----------
+app.post('/admin/candidates', requireAdmin, upload.single('photo'), (req, res) => {
+  try {
+    const { number, name, description } = req.body;
+    if (!name || !String(name).trim()) throw new Error('Nama calon wajib diisi.');
+    const photo = req.file ? `/uploads/${req.file.filename}` : null;
+    db.addCandidate({ number: number || (db.candidates().length + 1), name: String(name).trim(), photo, description });
+    setFlash(req, 'ok', 'Calon ditambahkan.');
+  } catch (e) { setFlash(req, 'err', e.message); }
+  res.redirect('/admin');
+});
+app.post('/admin/candidates/:id/edit', requireAdmin, upload.single('photo'), (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { number, name, description } = req.body;
+    if (!name || !String(name).trim()) throw new Error('Nama calon wajib diisi.');
+    const photo = req.file ? `/uploads/${req.file.filename}` : null;
+    if (photo) { const old = db.candidate(id); if (old && old.photo) safeUnlink(old.photo); }
+    db.updateCandidate(id, { number: number || 0, name: String(name).trim(), photo, description });
+    setFlash(req, 'ok', 'Calon diperbarui.');
+  } catch (e) { setFlash(req, 'err', e.message); }
+  res.redirect('/admin');
+});
+app.post('/admin/candidates/:id/delete', requireAdmin, (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const old = db.candidate(id);
+    if (old && old.photo) safeUnlink(old.photo);
+    db.deleteCandidate(id);
+    setFlash(req, 'ok', 'Calon dihapus.');
+  } catch (e) { setFlash(req, 'err', e.message); }
+  res.redirect('/admin');
+});
+
 app.use((err, req, res, next) => {
   console.error(err);
   if (req.path.startsWith('/admin')) {
