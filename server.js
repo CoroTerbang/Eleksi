@@ -26,7 +26,14 @@ const storage = multer.diskStorage({
     cb(null, `candidate-${Date.now()}-${crypto.randomUUID().slice(0, 8)}${ext}`);
   },
 });
-const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 }, fileFilter: (req, file, cb) => cb(null, /^image\//.test(file.mimetype)) });
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!/^image\//.test(file.mimetype)) return cb(new Error('Format gambar tidak didukung'));
+    cb(null, true);
+  },
+});
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'eleksi-dev-secret-change-me',
@@ -212,7 +219,7 @@ app.post('/vote/cast', (req, res) => {
   let chosen = [];
   try {
     db.castVote(req.session.voterId, ids);
-    chosen = ids.map(id => db.candidate(Number(id))).name);
+    chosen = ids.map(id => db.candidate(Number(id)).name);
   } catch (e) {
     return res.render('vote/ballot', { title: 'Pilih Calon', candidates: db.candidates(), voter, quota: db.quota(), kioskEnabled: db.getSetting('kiosk_enabled'), error: e.message });
   }
