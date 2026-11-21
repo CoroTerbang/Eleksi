@@ -155,6 +155,34 @@ app.get('/admin/codes/print', requireAdmin, (req, res) => {
   res.render('admin/codes-print', { title: 'Cetak Kode', voters: db.voters() });
 });
 
+// ---------- Admin: pengaturan & reset ----------
+app.post('/admin/status', requireAdmin, (req, res) => {
+  db.setSetting('election_status', req.body.status === 'open' ? 'open' : 'closed');
+  setFlash(req, 'ok', req.body.status === 'open' ? 'Pemungutan dibuka.' : 'Pemungutan ditutup.');
+  res.redirect('/admin');
+});
+app.post('/admin/quota', requireAdmin, (req, res) => {
+  const n = Number(req.body.quota);
+  if (!Number.isInteger(n) || n < 1) { setFlash(req, 'err', 'Kuota tidak valid.'); return res.redirect('/admin'); }
+  db.setSetting('quiz_quota', String(n));
+  setFlash(req, 'ok', 'Kuota disimpan.');
+  res.redirect('/admin');
+});
+app.post('/admin/kiosk', requireAdmin, (req, res) => {
+  db.setSetting('kiosk_enabled', req.body.enabled === '1' ? '1' : '0');
+  setFlash(req, 'ok', 'Pengaturan kunci layar disimpan.');
+  res.redirect('/admin');
+});
+app.post('/admin/reset', requireAdmin, (req, res) => {
+  if (req.body.confirm !== 'YA') { setFlash(req, 'err', 'Konfirmasi tidak valid.'); return res.redirect('/admin'); }
+  try {
+    db.resetVotes();
+    db.generateCodes();
+    setFlash(req, 'ok', 'Semua suara direset dan kode digenerate ulang.');
+  } catch (e) { setFlash(req, 'err', e.message); }
+  res.redirect('/admin');
+});
+
 app.use((err, req, res, next) => {
   console.error(err);
   if (req.path.startsWith('/admin')) {
