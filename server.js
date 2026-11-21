@@ -228,6 +228,28 @@ app.post('/vote/unlock', (req, res) => {
   res.json({ ok });
 });
 
+// ---------- Admin: reveal audit ----------
+app.post('/admin/reveal', requireAdmin, (req, res) => {
+  const admin = db.db.prepare('SELECT * FROM admins WHERE id=?').get(req.session.adminId);
+  if (!admin || !bcrypt.compareSync(String(req.body.password || ''), admin.password_hash)) {
+    setFlash(req, 'err', 'Password admin salah.');
+    return res.redirect('/admin');
+  }
+  res.render('admin/dashboard', {
+    title: 'Panel Admin',
+    admin: req.session.adminName,
+    flash: null,
+    status: db.getSetting('election_status'),
+    quota: db.quota(),
+    kiosk: db.getSetting('kiosk_enabled'),
+    stats: db.stats(),
+    candidates: db.candidates(),
+    voters: db.voters(),
+    results: db.results(),
+    revealed: db.audit(),
+  });
+});
+
 app.use((err, req, res, next) => {
   console.error(err);
   if (req.path.startsWith('/admin')) {
