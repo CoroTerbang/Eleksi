@@ -1,8 +1,8 @@
 {
-  "name": "eleksi-ipm",
+  "name": "eleksi-sekolah",
   "version": "1.0.0",
   "private": true,
-  "description": "Sistem e-voting formatur Ikatan Pelajar Muhammadiyah",
+  "description": "Sistem e-voting formatur organisasi sekolah",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
