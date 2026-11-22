@@ -60,6 +60,7 @@ button, input, select, textarea { font: inherit; }
   background: rgba(255,255,255,.18); font-weight: 800; letter-spacing: .5px;
 }
 .brand-name strong { font-weight: 800; }
+.brand-name small { display: block; font-size: 10px; font-weight: 500; letter-spacing: .3px; opacity: .78; line-height: 1.1; }
 .topnav { display: flex; gap: 14px; align-items: center; }
 .topnav a { color: #fff; opacity: .92; }
 .topnav a:hover { opacity: 1; text-decoration: underline; }

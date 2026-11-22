@@ -36,9 +36,10 @@ CREATE TABLE IF NOT EXISTS voters (
 );
 CREATE TABLE IF NOT EXISTS votes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  voter_id INTEGER NOT NULL UNIQUE REFERENCES voters(id) ON DELETE CASCADE,
+  voter_id INTEGER NOT NULL REFERENCES voters(id) ON DELETE CASCADE,
   candidate_id INTEGER NOT NULL REFERENCES candidates(id),
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (voter_id, candidate_id)
 );
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
@@ -135,15 +136,21 @@ function generateCodes() {
   return rows.length;
 }
 
-function castVote(voterId, candidateId) {
+function castVote(voterId, candidateIds) {
+  const ids = [...new Set((Array.isArray(candidateIds) ? candidateIds : [candidateIds]).map(Number))];
+  const need = quota();
+  if (ids.some(id => !Number.isInteger(id))) throw new Error('Pilihan tidak valid');
+  if (ids.length !== need) throw new Error(`Pilih tepat ${need} calon`);
   db.exec('BEGIN IMMEDIATE');
   try {
     if (!isOpen()) throw new Error('Pemungutan sedang ditutup');
     const voter = db.prepare('SELECT has_voted FROM voters WHERE id=?').get(voterId);
     if (!voter) throw new Error('Pemilih tidak ditemukan');
     if (voter.has_voted) throw new Error('Pemilih sudah menggunakan hak pilih');
-    if (!db.prepare('SELECT 1 FROM candidates WHERE id=?').get(candidateId)) throw new Error('Calon tidak ditemukan');
-    stmts.insertVote.run(voterId, candidateId);
+    for (const id of ids) {
+      if (!db.prepare('SELECT 1 FROM candidates WHERE id=?').get(id)) throw new Error('Calon tidak ditemukan');
+    }
+    for (const id of ids) stmts.insertVote.run(voterId, id);
     stmts.markVoted.run(voterId);
     db.exec('COMMIT');
   } catch (e) { try { db.exec('ROLLBACK'); } catch {} throw e; }
