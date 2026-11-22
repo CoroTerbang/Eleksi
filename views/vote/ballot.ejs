@@ -1,0 +1,33 @@
+<%- include('../partials/header', { title, admin: false }) %>
+<section class="ballot" data-quota="<%= quota %>" data-kiosk="<%= (typeof kioskEnabled !== 'undefined' ? kioskEnabled : '1') %>">
+  <div class="ballot-head">
+    <h1>Pilih Calon Formatur</h1>
+    <p class="muted">Halo, <strong><%= voter.name %></strong>. Pilih tepat <strong><%= quota %></strong> calon.</p>
+    <% if (error) { %><div class="alert alert-error" role="alert"><%= error %></div><% } %>
+  </div>
+  <form method="post" action="/vote/cast" class="ballot-form" id="ballotForm">
+    <div class="candidate-grid">
+      <% candidates.forEach(c => { %>
+        <label class="candidate-card">
+          <input type="checkbox" name="candidateId" value="<%= c.id %>" class="candidate-check">
+          <div class="card-inner">
+            <div class="candidate-photo">
+              <% if (c.photo) { %><img src="<%= c.photo %>" alt="Foto <%= c.name %>"><% } else { %><span class="placeholder">No foto</span><% } %>
+            </div>
+            <div class="candidate-info">
+              <span class="candidate-number"><%= c.number %></span>
+              <h2><%= c.name %></h2>
+              <p><%= c.description || '-' %></p>
+            </div>
+          </div>
+        </label>
+      <% }) %>
+    </div>
+    <div class="ballot-actions">
+      <a href="/vote/cancel" class="btn">Batal</a>
+      <button type="submit" class="btn btn-primary">Kirim Suara</button>
+    </div>
+  </form>
+</section>
+<script src="/kiosk.js" defer></script>
+<%- include('../partials/footer') %>

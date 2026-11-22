@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Cetak Kode Pemilih · Eleksi IPM</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 8px; }
+    .card { border: 1px solid #999; border-radius: 8px; padding: 12px; text-align: center; page-break-inside: avoid; }
+    .card .name { font-weight: 600; margin-top: 6px; }
+    .card .code { font-size: 28px; letter-spacing: 4px; font-family: monospace; margin: 8px 0; }
+    .card .nis { color: #555; font-size: 12px; }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="padding:12px">
+    <button onclick="window.print()">Cetak</button>
+    <a href="/admin">Kembali</a>
+  </div>
+  <div class="grid">
+    <% voters.forEach(v => { %>
+      <div class="card">
+        <div class="nis">NIS <%= v.nis %></div>
+        <div class="code"><%= v.code || '----' %></div>
+        <div class="name"><%= v.name %></div>
+      </div>
+    <% }) %>
+  </div>
+</body>
+</html>

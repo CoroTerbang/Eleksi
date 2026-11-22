@@ -1,0 +1,185 @@
+<%- include('../partials/header', { title, admin }) %>
+<section class="dashboard">
+  <div class="dashboard-head">
+    <div>
+      <h1>Panel Admin</h1>
+      <p class="muted">Halo, <%= admin %>. Kelola pemungutan formatur IPM.</p>
+    </div>
+    <% if (flash) { %>
+      <div class="alert alert-<%= flash.type === 'ok' ? 'success' : 'error' %>" role="status"><%= flash.text %></div>
+    <% } %>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><span class="stat-label">Total Pemilih</span><span class="stat-value"><%= stats.totalVoters %></span></div>
+    <div class="stat-card"><span class="stat-label">Sudah Memilih</span><span class="stat-value"><%= stats.voted %></span></div>
+    <div class="stat-card"><span class="stat-label">Calon</span><span class="stat-value"><%= candidates.length %></span></div>
+    <div class="stat-card"><span class="stat-label">Status</span><span class="stat-value"><%= status === 'open' ? 'Dibuka' : 'Ditutup' %></span></div>
+  </div>
+
+  <div class="card">
+    <h2>Pengaturan Pemungutan</h2>
+    <form method="post" action="/admin/status" class="inline-form">
+      <label>
+        <span>Status</span>
+        <select name="status">
+          <option value="open" <%= status === 'open' ? 'selected' : '' %>>Dibuka</option>
+          <option value="closed" <%= status === 'closed' ? 'selected' : '' %>>Ditutup</option>
+        </select>
+      </label>
+      <button type="submit" class="btn btn-primary">Simpan Status</button>
+    </form>
+    <form method="post" action="/admin/quota" class="inline-form">
+      <label>
+        <span>Kuota pilihan (calon per pemilih)</span>
+        <input type="number" name="quota" min="1" max="<%= candidates.length || 1 %>" value="<%= quota %>" required>
+      </label>
+      <button type="submit" class="btn">Simpan Kuota</button>
+    </form>
+    <form method="post" action="/admin/kiosk" class="inline-form">
+      <label>
+        <span>Kunci layar bilik</span>
+        <select name="enabled">
+          <option value="1" <%= kiosk === '1' ? 'selected' : '' %>>Aktif</option>
+          <option value="0" <%= kiosk === '0' ? 'selected' : '' %>>Nonaktif</option>
+        </select>
+      </label>
+      <button type="submit" class="btn">Simpan</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Hasil Live</h2>
+    <% const totalSel = results.reduce((a,r)=>a+r.votes,0); %>
+    <table class="table">
+      <thead><tr><th>No</th><th>Calon</th><th>Suara</th><th>Persentase</th></tr></thead>
+      <tbody>
+        <% results.forEach(r => { %>
+          <tr>
+            <td><%= r.number %></td>
+            <td><%= r.name %></td>
+            <td><%= r.votes %></td>
+            <td>
+              <div class="bar"><span style="width: <%= totalSel ? Math.round(r.votes/totalSel*100) : 0 %>%"></span></div>
+              <%= totalSel ? Math.round(r.votes/totalSel*100) : 0 %>%
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <p class="muted">Total pilihan: <%= totalSel %></p>
+  </div>
+
+  <div class="card">
+    <h2>Calon</h2>
+    <details>
+      <summary class="btn">Tambah Calon</summary>
+      <form method="post" action="/admin/candidates" enctype="multipart/form-data" class="form-stack">
+        <label><span>Nomor urut</span><input type="number" name="number" min="1" value="<%= candidates.length + 1 %>"></label>
+        <label><span>Nama</span><input type="text" name="name" required></label>
+        <label><span>Teks/Visi</span><textarea name="description" rows="3"></textarea></label>
+        <label><span>Foto poster</span><input type="file" name="photo" accept="image/*"></label>
+        <button type="submit" class="btn btn-primary">Tambah</button>
+      </form>
+    </details>
+    <ul class="candidate-list">
+      <% candidates.forEach(c => { %>
+        <li class="candidate-item">
+          <div class="candidate-thumb">
+            <% if (c.photo) { %><img src="<%= c.photo %>" alt="Foto <%= c.name %>"><% } else { %><span class="placeholder">No foto</span><% } %>
+          </div>
+          <div class="candidate-body">
+            <strong><%= c.number %>. <%= c.name %></strong>
+            <p><%= c.description || '-' %></p>
+            <div class="row-actions">
+              <details>
+                <summary class="btn btn-sm">Edit</summary>
+                <form method="post" action="/admin/candidates/<%= c.id %>/edit" enctype="multipart/form-data" class="form-stack">
+                  <label><span>Nomor urut</span><input type="number" name="number" min="1" value="<%= c.number %>"></label>
+                  <label><span>Nama</span><input type="text" name="name" value="<%= c.name %>" required></label>
+                  <label><span>Teks/Visi</span><textarea name="description" rows="3"><%= c.description || '' %></textarea></label>
+                  <label><span>Foto baru (opsional)</span><input type="file" name="photo" accept="image/*"></label>
+                  <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
+                </form>
+              </details>
+              <form method="post" action="/admin/candidates/<%= c.id %>/delete" onsubmit="return confirm('Hapus calon ini?')">
+                <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+              </form>
+            </div>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Daftar Pemilih Tetap (DPT)</h2>
+    <div class="two-col">
+      <form method="post" action="/admin/voters" class="form-stack">
+        <h3>Tambah Satu</h3>
+        <label><span>Nama</span><input type="text" name="name" required></label>
+        <label><span>NIS</span><input type="text" name="nis" required></label>
+        <button type="submit" class="btn">Tambah</button>
+      </form>
+      <form method="post" action="/admin/voters/bulk" class="form-stack">
+        <h3>Impor Massal</h3>
+        <p class="muted">Satu baris: <code>NIS,Nama</code></p>
+        <textarea name="bulk" rows="6" placeholder="12345, Budi Santoso"></textarea>
+        <button type="submit" class="btn">Impor</button>
+      </form>
+    </div>
+    <div class="row-actions">
+      <form method="post" action="/admin/codes/generate"><button type="submit" class="btn">Generate Kode 6 Digit</button></form>
+      <a class="btn" href="/admin/codes/print" target="_blank">Cetak Kartu Kode</a>
+    </div>
+    <table class="table table-compact">
+      <thead><tr><th>NIS</th><th>Nama</th><th>Kode</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% voters.forEach(v => { %>
+          <tr>
+            <td><%= v.nis %></td>
+            <td><%= v.name %></td>
+            <td><code><%= v.code || '-' %></code></td>
+            <td><%= v.has_voted ? 'Sudah memilih' : 'Belum' %></td>
+            <td>
+              <form method="post" action="/admin/voters/<%= v.id %>/delete" onsubmit="return confirm('Hapus pemilih ini?')">
+                <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Audit Pemilih–Pilihan (butuh password)</h2>
+    <form method="post" action="/admin/reveal" class="inline-form">
+      <label>
+        <span>Password admin</span>
+        <input type="password" name="password" required>
+      </label>
+      <button type="submit" class="btn">Lihat Pemetaan</button>
+    </form>
+    <% if (typeof revealed !== 'undefined' && revealed) { %>
+      <table class="table table-compact">
+        <thead><tr><th>Pemilih</th><th>NIS</th><th>Kode</th><th>Calon</th><th>Waktu</th></tr></thead>
+        <tbody>
+          <% revealed.forEach(r => { %>
+            <tr><td><%= r.name %></td><td><%= r.nis %></td><td><code><%= r.code %></code></td><td><%= r.candidate_number %>. <%= r.candidate_name %></td><td><%= r.voted_at %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <div class="card card-danger">
+    <h2>Reset Pemungutan</h2>
+    <p class="muted">Menghapus semua suara, menandai ulang kode, dan menutup pemungutan. DPT dan calon tidak berubah.</p>
+    <form method="post" action="/admin/reset" onsubmit="return confirm('Reset semua suara?')">
+      <input type="hidden" name="confirm" value="YA">
+      <button type="submit" class="btn btn-danger">Reset Semua Suara</button>
+    </form>
+  </div>
+</section>
+<%- include('../partials/footer') %>

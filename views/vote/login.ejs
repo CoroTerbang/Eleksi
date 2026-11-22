@@ -1,0 +1,15 @@
+<%- include('../partials/header', { title, admin: false }) %>
+<section class="card card-narrow vote-login">
+  <h1>Panel Pemilih</h1>
+  <p class="muted">Masukkan kode 6 digit dari kartu Anda.</p>
+  <% if (error) { %><div class="alert alert-error" role="alert"><%= error %></div><% } %>
+  <% if (info) { %><div class="alert alert-info" role="status"><%= info %></div><% } %>
+  <form method="post" action="/vote/verify" class="form-stack">
+    <label>
+      <span>Kode Pemilih</span>
+      <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" required autofocus>
+    </label>
+    <button type="submit" class="btn btn-primary btn-block">Lanjut Memilih</button>
+  </form>
+</section>
+<%- include('../partials/footer') %>
