@@ -157,7 +157,12 @@ button, input, select, textarea { font: inherit; }
 .candidate-info { padding: 14px; flex: 1; }
 .candidate-number { display: inline-block; background: var(--color-primary-soft); color: var(--color-primary-dark); font-weight: 700; padding: 2px 8px; border-radius: 999px; font-size: 12px; margin-bottom: 6px; }
 .candidate-info h2 { margin: 4px 0 6px; font-size: 17px; }
-.candidate-info p { margin: 0; color: var(--color-muted); font-size: 14px; }
+.candidate-info p, .candidate-desc p { margin: 0 0 8px; color: var(--color-muted); font-size: 14px; line-height: 1.55; }
+.candidate-info p:last-child, .candidate-desc p:last-child { margin-bottom: 0; }
+.candidate-desc ul { margin: 0 0 8px; padding-left: 20px; color: var(--color-muted); font-size: 14px; line-height: 1.55; }
+.candidate-desc li { margin-bottom: 2px; }
+.candidate-desc strong { color: var(--color-text); font-weight: 700; }
+.hint { margin: 4px 0 0; font-size: 12px; }
 .placeholder { color: var(--color-muted); font-size: 13px; }
 
 .bar { height: 8px; background: #eef3ef; border-radius: 999px; overflow: hidden; margin-bottom: 4px; }

@@ -83,7 +83,8 @@
       <summary class="btn">Tambah Calon</summary>
       <form method="post" action="/admin/candidates" enctype="multipart/form-data" class="form-stack">
         <label><span>Nama</span><input type="text" name="name" required></label>
-        <label><span>Teks/Visi</span><textarea name="description" rows="3"></textarea></label>
+        <label><span>Teks/Visi</span><textarea name="description" rows="4" placeholder="**Tebal**, *miring*, baris diawali &quot;- &quot; untuk daftar."></textarea></label>
+        <p class="muted hint">Format: <code>**tebal**</code>, <code>*miring*</code>, <code>- </code> untuk daftar, baris kosong untuk paragraf baru.</p>
         <label><span>Foto poster</span><input type="file" name="photo" accept="image/*"></label>
         <button type="submit" class="btn btn-primary">Tambah</button>
       </form>
@@ -96,13 +97,14 @@
           </div>
           <div class="candidate-body">
             <strong><%= c.number %>. <%= c.name %></strong>
-            <p><%= c.description || '-' %></p>
+            <div class="candidate-desc"><%- c.description ? formatCandidateText(c.description) : '<p class="muted">-</p>' %></div>
             <div class="row-actions">
               <details>
                 <summary class="btn btn-sm">Edit</summary>
                 <form method="post" action="/admin/candidates/<%= c.id %>/edit" enctype="multipart/form-data" class="form-stack">
                   <label><span>Nama</span><input type="text" name="name" value="<%= c.name %>" required></label>
-                  <label><span>Teks/Visi</span><textarea name="description" rows="3"><%= c.description || '' %></textarea></label>
+                  <label><span>Teks/Visi</span><textarea name="description" rows="4"><%= c.description || '' %></textarea></label>
+                  <p class="muted hint">Format: <code>**tebal**</code>, <code>*miring*</code>, <code>- </code> untuk daftar, baris kosong untuk paragraf baru.</p>
                   <label><span>Foto baru (opsional)</span><input type="file" name="photo" accept="image/*"></label>
                   <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
                 </form>

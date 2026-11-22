@@ -8,7 +8,7 @@ Sistem ini ringan: satu proses Node.js, satu file database SQLite, tanpa server 
 
 - **Panel admin**
   - Kelola Daftar Pemilih Tetap (DPT): tambah satu atau impor massal `NIS,Nama`.
-  - Kelola calon: nomor, nama, foto poster, teks/visi.
+  - Kelola calon: nomor, nama, foto poster, teks/visi dengan format tebal, miring, dan daftar.
   - Atur kuota pilihan per pemilih (bisa 1 atau beberapa calon).
   - Atur judul pemilihan, yang tampil di halaman pemilih.
   - Generate kode 6 digit per pemilih dan cetak kartu kode.

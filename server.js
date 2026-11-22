@@ -6,8 +6,10 @@ const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
 const db = require('./db');
+const { formatCandidateText } = require('./format');
 
 const app = express();
+app.locals.formatCandidateText = formatCandidateText;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
