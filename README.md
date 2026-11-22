@@ -10,6 +10,7 @@ Sistem ini ringan: satu proses Node.js, satu file database SQLite, tanpa server 
   - Kelola Daftar Pemilih Tetap (DPT): tambah satu atau impor massal `NIS,Nama`.
   - Kelola calon: nomor, nama, foto poster, teks/visi.
   - Atur kuota pilihan per pemilih (bisa 1 atau beberapa calon).
+  - Atur judul pemilihan, yang tampil di halaman pemilih.
   - Generate kode 6 digit per pemilih dan cetak kartu kode.
   - Buka/tutup pemungutan, reset suara.
   - Hasil live per calon.
@@ -83,6 +84,7 @@ Reset menghapus semua suara, menandai ulang kode, dan menutup pemungutan. DPT da
 | `ADMIN_USER` | `admin` | Username admin awal |
 | `ADMIN_PASS` | `admin123` | Password admin awal |
 | `ELECTION_STATUS` | `open` | Status awal pemungutan |
+| `ELECTION_TITLE` | `Pemilihan Formatur Organisasi Sekolah` | Judul pemilihan awal |
 | `SESSION_SECRET` | bawaan dev | Rahasia session; ganti di produksi |
 | `ELEKSI_DB` | `data/eleksi.sqlite` | Lokasi file database |
 

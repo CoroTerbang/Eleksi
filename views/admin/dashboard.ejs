@@ -11,14 +11,21 @@
   </div>
 
   <div class="stats-grid">
-    <div class="stat-card"><span class="stat-label">Total Pemilih</span><span class="stat-value"><%= stats.totalVoters %></span></div>
-    <div class="stat-card"><span class="stat-label">Sudah Memilih</span><span class="stat-value"><%= stats.voted %></span></div>
-    <div class="stat-card"><span class="stat-label">Calon</span><span class="stat-value"><%= candidates.length %></span></div>
-    <div class="stat-card"><span class="stat-label">Status</span><span class="stat-value"><%= status === 'open' ? 'Dibuka' : 'Ditutup' %></span></div>
+    <div class="stat-card"><span class="stat-label">Total Pemilih</span><span class="stat-value" id="stat-total"><%= stats.totalVoters %></span></div>
+    <div class="stat-card"><span class="stat-label">Sudah Memilih</span><span class="stat-value" id="stat-voted"><%= stats.voted %></span></div>
+    <div class="stat-card"><span class="stat-label">Calon</span><span class="stat-value" id="stat-candidates"><%= candidates.length %></span></div>
+    <div class="stat-card"><span class="stat-label">Status</span><span class="stat-value" id="stat-status"><%= status === 'open' ? 'Dibuka' : 'Ditutup' %></span></div>
   </div>
 
   <div class="card">
     <h2>Pengaturan Pemungutan</h2>
+    <form method="post" action="/admin/title" class="inline-form">
+      <label>
+        <span>Judul pemilihan (tampil di halaman pemilih)</span>
+        <input type="text" name="title" value="<%= electionTitle %>" required>
+      </label>
+      <button type="submit" class="btn btn-primary">Simpan Judul</button>
+    </form>
     <form method="post" action="/admin/status" class="inline-form">
       <label>
         <span>Status</span>
@@ -53,7 +60,7 @@
     <% const totalSel = results.reduce((a,r)=>a+r.votes,0); %>
     <table class="table">
       <thead><tr><th>No</th><th>Calon</th><th>Suara</th><th>Persentase</th></tr></thead>
-      <tbody>
+      <tbody id="results-body">
         <% results.forEach(r => { %>
           <tr>
             <td><%= r.number %></td>
@@ -67,7 +74,7 @@
         <% }) %>
       </tbody>
     </table>
-    <p class="muted">Total pilihan: <%= totalSel %></p>
+    <p class="muted">Total pilihan: <span id="results-total"><%= totalSel %></span></p>
   </div>
 
   <div class="card">
@@ -75,7 +82,6 @@
     <details>
       <summary class="btn">Tambah Calon</summary>
       <form method="post" action="/admin/candidates" enctype="multipart/form-data" class="form-stack">
-        <label><span>Nomor urut</span><input type="number" name="number" min="1" value="<%= candidates.length + 1 %>"></label>
         <label><span>Nama</span><input type="text" name="name" required></label>
         <label><span>Teks/Visi</span><textarea name="description" rows="3"></textarea></label>
         <label><span>Foto poster</span><input type="file" name="photo" accept="image/*"></label>
@@ -95,7 +101,6 @@
               <details>
                 <summary class="btn btn-sm">Edit</summary>
                 <form method="post" action="/admin/candidates/<%= c.id %>/edit" enctype="multipart/form-data" class="form-stack">
-                  <label><span>Nomor urut</span><input type="number" name="number" min="1" value="<%= c.number %>"></label>
                   <label><span>Nama</span><input type="text" name="name" value="<%= c.name %>" required></label>
                   <label><span>Teks/Visi</span><textarea name="description" rows="3"><%= c.description || '' %></textarea></label>
                   <label><span>Foto baru (opsional)</span><input type="file" name="photo" accept="image/*"></label>
@@ -182,4 +187,5 @@
     </form>
   </div>
 </section>
+<script src="/admin.js"></script>
 <%- include('../partials/footer') %>

@@ -83,6 +83,7 @@ app.get('/admin', requireAdmin, (req, res) => {
     title: 'Panel Admin',
     admin: req.session.adminName,
     flash: takeFlash(req),
+    electionTitle: db.getSetting('election_title'),
     status: db.getSetting('election_status'),
     quota: db.quota(),
     kiosk: db.getSetting('kiosk_enabled'),
@@ -93,13 +94,22 @@ app.get('/admin', requireAdmin, (req, res) => {
   });
 });
 
+app.get('/admin/live', requireAdmin, (req, res) => {
+  res.json({
+    stats: db.stats(),
+    candidates: db.candidates().length,
+    status: db.getSetting('election_status'),
+    results: db.results(),
+  });
+});
+
 // ---------- Admin: calon ----------
 app.post('/admin/candidates', requireAdmin, upload.single('photo'), (req, res) => {
   try {
-    const { number, name, description } = req.body;
+    const { name, description } = req.body;
     if (!name || !String(name).trim()) throw new Error('Nama calon wajib diisi.');
     const photo = req.file ? `/uploads/${req.file.filename}` : null;
-    db.addCandidate({ number: number || (db.candidates().length + 1), name: String(name).trim(), photo, description });
+    db.addCandidate({ number: db.nextCandidateNumber(), name: String(name).trim(), photo, description });
     setFlash(req, 'ok', 'Calon ditambahkan.');
   } catch (e) { setFlash(req, 'err', e.message); }
   res.redirect('/admin');
@@ -107,11 +117,13 @@ app.post('/admin/candidates', requireAdmin, upload.single('photo'), (req, res) =
 app.post('/admin/candidates/:id/edit', requireAdmin, upload.single('photo'), (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { number, name, description } = req.body;
+    const { name, description } = req.body;
     if (!name || !String(name).trim()) throw new Error('Nama calon wajib diisi.');
+    const old = db.candidate(id);
+    if (!old) throw new Error('Calon tidak ditemukan.');
     const photo = req.file ? `/uploads/${req.file.filename}` : null;
-    if (photo) { const old = db.candidate(id); if (old && old.photo) safeUnlink(old.photo); }
-    db.updateCandidate(id, { number: number || 0, name: String(name).trim(), photo, description });
+    if (photo && old.photo) safeUnlink(old.photo);
+    db.updateCandidate(id, { number: old.number, name: String(name).trim(), photo, description });
     setFlash(req, 'ok', 'Calon diperbarui.');
   } catch (e) { setFlash(req, 'err', e.message); }
   res.redirect('/admin');
@@ -122,6 +134,7 @@ app.post('/admin/candidates/:id/delete', requireAdmin, (req, res) => {
     const old = db.candidate(id);
     if (old && old.photo) safeUnlink(old.photo);
     db.deleteCandidate(id);
+    db.renumberCandidates();
     setFlash(req, 'ok', 'Calon dihapus.');
   } catch (e) { setFlash(req, 'err', e.message); }
   res.redirect('/admin');
@@ -180,6 +193,13 @@ app.post('/admin/kiosk', requireAdmin, (req, res) => {
   setFlash(req, 'ok', 'Pengaturan kunci layar disimpan.');
   res.redirect('/admin');
 });
+app.post('/admin/title', requireAdmin, (req, res) => {
+  const t = String(req.body.title || '').trim();
+  if (!t) { setFlash(req, 'err', 'Judul pemilihan wajib diisi.'); return res.redirect('/admin'); }
+  db.setSetting('election_title', t);
+  setFlash(req, 'ok', 'Judul pemilihan disimpan.');
+  res.redirect('/admin');
+});
 app.post('/admin/reset', requireAdmin, (req, res) => {
   if (req.body.confirm !== 'YA') { setFlash(req, 'err', 'Konfirmasi tidak valid.'); return res.redirect('/admin'); }
   try {
@@ -191,24 +211,27 @@ app.post('/admin/reset', requireAdmin, (req, res) => {
 });
 
 // ---------- Panel pemilih ----------
+const electionTitle = () => db.getSetting('election_title');
+const voteError = (res, view, opts) => res.render(view, { title: 'Panel Pemilih', electionTitle: electionTitle(), error: null, info: null, ...opts });
+
 app.get('/vote', (req, res) => {
-  res.render('vote/login', { title: 'Panel Pemilih', error: null, info: null });
+  voteError(res, 'vote/login', {});
 });
 app.post('/vote/verify', (req, res) => {
   const code = String(req.body.code || '').trim();
   const voter = db.voterByCode(code);
-  if (!db.isOpen()) return res.render('vote/login', { title: 'Panel Pemilih', error: 'Pemungutan suara sedang ditutup.', info: null });
-  if (!voter) return res.render('vote/login', { title: 'Panel Pemilih', error: `Kode "${code}" tidak valid.`, info: null });
-  if (voter.has_voted) return res.render('vote/login', { title: 'Panel Pemilih', error: `${voter.name} sudah menggunakan hak pilih.`, info: null });
+  if (!db.isOpen()) return voteError(res, 'vote/login', { error: 'Pemungutan suara sedang ditutup.' });
+  if (!voter) return voteError(res, 'vote/login', { error: `Kode "${code}" tidak valid.` });
+  if (voter.has_voted) return voteError(res, 'vote/login', { error: `${voter.name} sudah menggunakan hak pilih.` });
   req.session.voterId = voter.id;
   res.redirect('/vote/ballot');
 });
 app.get('/vote/ballot', (req, res) => {
-  if (!db.isOpen()) { delete req.session.voterId; return res.render('vote/closed', { title: 'Pemungutan Ditutup' }); }
+  if (!db.isOpen()) { delete req.session.voterId; return res.render('vote/closed', { title: 'Pemungutan Ditutup', electionTitle: electionTitle() }); }
   if (!req.session.voterId) return res.redirect('/vote');
   const voter = db.voter(req.session.voterId);
   if (!voter || voter.has_voted) { delete req.session.voterId; return res.redirect('/vote'); }
-  res.render('vote/ballot', { title: 'Pilih Calon', candidates: db.candidates(), voter, quota: db.quota(), kioskEnabled: db.getSetting('kiosk_enabled'), error: null });
+  res.render('vote/ballot', { title: 'Pilih Calon', electionTitle: electionTitle(), candidates: db.candidates(), voter, quota: db.quota(), kioskEnabled: db.getSetting('kiosk_enabled'), error: null });
 });
 app.post('/vote/cast', (req, res) => {
   if (!req.session.voterId) return res.redirect('/vote');
@@ -221,10 +244,10 @@ app.post('/vote/cast', (req, res) => {
     db.castVote(req.session.voterId, ids);
     chosen = ids.map(id => db.candidate(Number(id)).name);
   } catch (e) {
-    return res.render('vote/ballot', { title: 'Pilih Calon', candidates: db.candidates(), voter, quota: db.quota(), kioskEnabled: db.getSetting('kiosk_enabled'), error: e.message });
+    return res.render('vote/ballot', { title: 'Pilih Calon', electionTitle: electionTitle(), candidates: db.candidates(), voter, quota: db.quota(), kioskEnabled: db.getSetting('kiosk_enabled'), error: e.message });
   }
   delete req.session.voterId;
-  res.render('vote/success', { title: 'Terima Kasih', voter, chosen });
+  res.render('vote/success', { title: 'Terima Kasih', electionTitle: electionTitle(), voter, chosen });
 });
 app.get('/vote/cancel', (req, res) => { delete req.session.voterId; res.redirect('/vote'); });
 
@@ -246,6 +269,7 @@ app.post('/admin/reveal', requireAdmin, (req, res) => {
     title: 'Panel Admin',
     admin: req.session.adminName,
     flash: null,
+    electionTitle: db.getSetting('election_title'),
     status: db.getSetting('election_status'),
     quota: db.quota(),
     kiosk: db.getSetting('kiosk_enabled'),

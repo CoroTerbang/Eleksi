@@ -1,7 +1,7 @@
 <%- include('../partials/header', { title, admin: false }) %>
 <section class="ballot" data-quota="<%= quota %>" data-kiosk="<%= (typeof kioskEnabled !== 'undefined' ? kioskEnabled : '1') %>">
   <div class="ballot-head">
-    <h1>Pilih Calon Formatur</h1>
+    <h1><%= electionTitle || 'Pemilihan Formatur' %></h1>
     <p class="muted">Halo, <strong><%= voter.name %></strong>. Pilih tepat <strong><%= quota %></strong> calon.</p>
     <% if (error) { %><div class="alert alert-error" role="alert"><%= error %></div><% } %>
   </div>
@@ -29,5 +29,6 @@
     </div>
   </form>
 </section>
+<script src="/ballot.js" defer></script>
 <script src="/kiosk.js" defer></script>
 <%- include('../partials/footer') %>

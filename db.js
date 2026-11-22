@@ -51,6 +51,7 @@ const seedSetting = db.prepare('INSERT OR IGNORE INTO settings (key,value) VALUE
 seedSetting.run('election_status', process.env.ELECTION_STATUS || 'open');
 seedSetting.run('quiz_quota', process.env.QUIZ_QUOTA || '1');
 seedSetting.run('kiosk_enabled', process.env.KIOSK_ENABLED || '1');
+seedSetting.run('election_title', process.env.ELECTION_TITLE || 'Pemilihan Formatur Organisasi Sekolah');
 
 if (!db.prepare('SELECT 1 FROM admins').get()) {
   const username = process.env.ADMIN_USER || 'admin';
@@ -111,6 +112,14 @@ function updateCandidate(id, { number, name, photo, description }) {
   }
 }
 function deleteCandidate(id) { db.prepare('DELETE FROM candidates WHERE id=?').run(id); }
+function nextCandidateNumber() {
+  return db.prepare('SELECT COALESCE(MAX(number),0)+1 AS n FROM candidates').get().n;
+}
+function renumberCandidates() {
+  const rows = db.prepare('SELECT id FROM candidates ORDER BY number, order_index, id').all();
+  const stmt = db.prepare('UPDATE candidates SET number=? WHERE id=?');
+  rows.forEach((row, i) => stmt.run(i + 1, row.id));
+}
 
 function addVoter(name, nis) { return stmts.insertVoter.run(name, nis).changes > 0; }
 function addVotersBulk(text) {
@@ -181,7 +190,7 @@ module.exports = {
   votesFor: (voterId) => stmts.voteByVoter.get(voterId),
   candidatesCount: () => stmts.candidatesCount.get().n,
   voters: () => stmts.voters.all(),
-  addCandidate, updateCandidate, deleteCandidate,
+  addCandidate, updateCandidate, deleteCandidate, nextCandidateNumber, renumberCandidates,
   addVoter, addVotersBulk, deleteVoter, generateCodes,
   castVote, resetVotes, stats, results, audit: () => stmts.audit.all(),
 };

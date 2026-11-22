@@ -1,6 +1,6 @@
 <%- include('../partials/header', { title, admin: false }) %>
 <section class="card card-narrow vote-login">
-  <h1>Panel Pemilih</h1>
+  <h1><%= electionTitle || 'Panel Pemilih' %></h1>
   <p class="muted">Masukkan kode 6 digit dari kartu Anda.</p>
   <% if (error) { %><div class="alert alert-error" role="alert"><%= error %></div><% } %>
   <% if (info) { %><div class="alert alert-info" role="status"><%= info %></div><% } %>

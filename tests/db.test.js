@@ -41,3 +41,20 @@ test('generateCodes assigns unique six digit codes', () => {
   assert.ok(codes.every(c => /^\d{6}$/.test(c)));
   assert.equal(new Set(codes).size, codes.length);
 });
+
+test('nextCandidateNumber and renumberCandidates keep numbers sequential', () => {
+  const a = db.addCandidate({ number: db.nextCandidateNumber(), name: 'A' });
+  const b = db.addCandidate({ number: db.nextCandidateNumber(), name: 'B' });
+  const c = db.addCandidate({ number: db.nextCandidateNumber(), name: 'C' });
+  assert.deepEqual(db.candidates().map(x => x.number), [1, 2, 3, 4]);
+  db.deleteCandidate(b);
+  db.renumberCandidates();
+  assert.deepEqual(db.candidates().map(x => x.number), [1, 2, 3]);
+  assert.equal(db.candidate(c).number, 3);
+  assert.ok(a && b && c);
+});
+
+test('election title setting persists', () => {
+  db.setSetting('election_title', 'Pemilihan Formatur Kelas 12');
+  assert.equal(db.getSetting('election_title'), 'Pemilihan Formatur Kelas 12');
+});
